@@ -21,7 +21,7 @@ export default function App() {
   // Estado del Chat Copiloto
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isModalManualOpen, setIsModalManualOpen] = useState(false);
-  const [cargandoDatos, setCargandoDatos] = useState(true);
+  const [medicoPreseleccionado, setMedicoPreseleccionado] = useState(null);
 
   // Cargar datos de la API (o repositorios en fallback)
   const cargarDatos = async () => {
@@ -92,7 +92,7 @@ export default function App() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        setCitas(prev => [data.cita, ...prev]);
+        setCitas(prev => [data.cita, ...prev.filter(c => c.id !== data.cita.id)]);
         return;
       }
     } catch (err) {
@@ -108,14 +108,27 @@ export default function App() {
     setCitas(prev => [citaMock, ...prev]);
   };
 
+  // Sincronización en tiempo real desde el Agente de IA del Chat
+  const handleCitasActualizadas = (payload, accion) => {
+    if (accion === 'crear' && payload) {
+      setCitas(prev => [payload, ...prev.filter(c => c.id !== payload.id)]);
+    } else if (accion === 'cancelar' && payload) {
+      setCitas(prev => prev.filter(c => c.id !== payload));
+    }
+    // Refetch de respaldo en background
+    cargarDatos();
+  };
+
   // Acción para agendar cita manual desde cualquier pestaña
-  const handleOpenAgendarManual = () => {
+  const handleOpenAgendarManual = (medico = null) => {
+    setMedicoPreseleccionado(medico);
     setTabActiva('citas');
     setIsModalManualOpen(true);
   };
 
   // Acción desde directorio médico para agendar con especialista
   const handleSelectMedicoParaCita = (medico) => {
+    setMedicoPreseleccionado(medico);
     setTabActiva('citas');
     setIsModalManualOpen(true);
   };
@@ -134,7 +147,7 @@ export default function App() {
         <HeroBanner
           totalCitas={citas.length}
           onOpenChat={() => setIsChatOpen(true)}
-          onOpenAgendarManual={handleOpenAgendarManual}
+          onOpenAgendarManual={() => handleOpenAgendarManual(null)}
         />
 
         {/* DATOS DEL PACIENTE ACTIVO */}
@@ -212,6 +225,7 @@ export default function App() {
             isModalOpen={isModalManualOpen}
             setIsModalOpen={setIsModalManualOpen}
             pacienteActual={pacienteActual}
+            medicoPreseleccionado={medicoPreseleccionado}
           />
         )}
 
@@ -253,7 +267,7 @@ export default function App() {
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         pacienteActual={pacienteActual}
-        onCitasActualizadas={cargarDatos}
+        onCitasActualizadas={handleCitasActualizadas}
       />
     </div>
   );

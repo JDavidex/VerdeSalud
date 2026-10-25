@@ -185,9 +185,16 @@ export default function ChatCopilot({
 
         setMensajes(prev => [...prev, nuevoMensajeBot]);
 
-        // Si se agendó o canceló una cita, actualizar el estado principal del hospital
+        // Si se agendó o canceló una cita, actualizar el estado principal del hospital en tiempo real
         if (data.tool === 'agendar_cita' || data.tool === 'cancelar_cita') {
-          if (onCitasActualizadas) onCitasActualizadas();
+          if (onCitasActualizadas) {
+            if (data.tool === 'agendar_cita' && data.datos?.cita) {
+              onCitasActualizadas(data.datos.cita, 'crear');
+            } else if (data.tool === 'cancelar_cita') {
+              const idCancelado = data.datos?.citaId || data.datos?.cita?.id;
+              onCitasActualizadas(idCancelado, 'cancelar');
+            }
+          }
           if (data.tool === 'agendar_cita') {
             try {
               confetti({
@@ -223,12 +230,13 @@ export default function ChatCopilot({
   };
 
   const sugerencias = [
-    { label: "Quiero una cita de cardiología", prompt: "Por favor agenda una cita de cardiología para mi control" },
+    { label: "Cita con Dra. Camila (General)", prompt: "Por favor agenda una cita con la Dra. Camila Morales" },
+    { label: "Cita con Dr. Vega (Cardiología)", prompt: "Por favor agenda una cita de cardiología con el Dr. Roberto Vega" },
+    { label: "Cita de Odontología", prompt: "Quiero una cita de odontología con la Dra. Sofía" },
     { label: "¿Qué citas tengo?", prompt: "¿Cuáles son mis citas médicas activas?" },
-    { label: "Ver mi historial y fórmulas", prompt: "Muestra mi historial clínico y las fórmulas médicas que tengo" },
-    { label: "Preparación examen colesterol", prompt: "¿Qué preparación necesito para un examen de perfil lipídico o colesterol?" },
     { label: "Cancelar cita médica", prompt: "Quiero cancelar mi cita médica actual" },
-    { label: "Horarios y sedes", prompt: "¿Cuáles son los horarios de atención y dónde quedan las sedes?" }
+    { label: "Ver mi historial y fórmulas", prompt: "Muestra mi historial clínico y las fórmulas médicas que tengo" },
+    { label: "Preparación examen colesterol", prompt: "¿Qué preparación necesito para un examen de perfil lipídico o colesterol?" }
   ];
 
   if (!isOpen) return null;

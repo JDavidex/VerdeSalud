@@ -307,27 +307,35 @@ class AgentService {
     }
 
     // CASO E: Agente - Cancelar Cita
-    if (texto.includes('cancelar') && (texto.includes('cita') || texto.includes('cita-'))) {
+    if (texto.includes('cancelar') && (texto.includes('cita') || texto.includes('cita-') || texto.includes('turno'))) {
       const citasActuales = citaRepository.obtenerPorPaciente(pacienteCedula);
-      
-      // Buscar ID en el texto ej: CITA-8921 o tomar la primera si hay una sola
+      let citaACancelar = null;
       const matchId = texto.match(/cita-\d+/i);
-      let citaId = matchId ? matchId[0].toUpperCase() : null;
 
-      if (!citaId && citasActuales.length === 1) {
-        citaId = citasActuales[0].id;
+      if (matchId) {
+        const idBuscado = matchId[0].toUpperCase();
+        citaACancelar = citasActuales.find(c => c.id === idBuscado) || citaRepository.obtenerPorId(idBuscado);
+      } else {
+        if (texto.includes('cardio') || texto.includes('vega')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('cardio') || c.medicoNombre.toLowerCase().includes('vega'));
+        } else if (texto.includes('general') || texto.includes('camila') || texto.includes('morales')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('general') || c.medicoNombre.toLowerCase().includes('camila'));
+        } else if (texto.includes('pedia') || texto.includes('valentina') || texto.includes('rios') || texto.includes('ríos')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('pedia') || c.medicoNombre.toLowerCase().includes('valentina'));
+        } else if (texto.includes('dermato') || texto.includes('juan') || texto.includes('ortiz')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('dermato') || c.medicoNombre.toLowerCase().includes('ortiz'));
+        } else if (texto.includes('odonto') || texto.includes('sofia') || texto.includes('sofía') || texto.includes('mendoza')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('odonto') || c.medicoNombre.toLowerCase().includes('mendoza'));
+        } else if (texto.includes('ortope') || texto.includes('mateo') || texto.includes('restrepo')) {
+          citaACancelar = citasActuales.find(c => c.especialidad.toLowerCase().includes('ortope') || c.medicoNombre.toLowerCase().includes('restrepo'));
+        }
+
+        if (!citaACancelar && citasActuales.length > 0) {
+          citaACancelar = citasActuales[0];
+        }
       }
 
-      if (!citaId && citasActuales.length > 1) {
-        return {
-          tipo: 'agente',
-          rol: 'Agente VerdeSalud (Gestor)',
-          mensaje: `Tienes varias citas registradas. Por favor indícame cuál deseas cancelar especificando el código (por ejemplo: "Cancelar ${citasActuales[0].id}").`,
-          datos: { citas: citasActuales }
-        };
-      }
-
-      if (!citaId) {
+      if (!citaACancelar) {
         return {
           tipo: 'agente',
           rol: 'Agente VerdeSalud (Gestor)',
@@ -336,52 +344,67 @@ class AgentService {
         };
       }
 
-      const res = await this.executeTool('cancelar_cita', { citaId, pacienteCedula });
+      const res = await this.executeTool('cancelar_cita', { citaId: citaACancelar.id, pacienteCedula });
       return {
         tipo: 'agente',
         rol: 'Agente VerdeSalud (Gestor)',
         tool: 'cancelar_cita',
-        mensaje: res.success ? `✅ **Acción completada con éxito:** Se ha cancelado la cita médica **${citaId}** de manera segura.` : `⚠️ Error: ${res.message}`,
-        datos: res
+        mensaje: res.success ? `✅ **Acción completada con éxito:** Se ha cancelado la cita médica **${citaACancelar.id}** (${citaACancelar.especialidad} - ${citaACancelar.medicoNombre}) de manera segura.` : `⚠️ Error: ${res.message}`,
+        datos: { ...res, citaId: citaACancelar.id }
       };
     }
 
-    // CASO F: Agente - Agendar Cita Médica (Con detección inteligente de especialidad y fecha)
-    if (texto.includes('agendar') || texto.includes('programar') || texto.includes('pedir cita') || texto.includes('solicitar cita') || texto.includes('cita de') || texto.includes('cita para') || texto.includes('sacar cita')) {
-      // Detección de especialidad
-      let especialidad = "Medicina General";
-      if (texto.includes('cardio')) especialidad = "Cardiología";
-      else if (texto.includes('pedia')) especialidad = "Pediatría";
-      else if (texto.includes('dermato')) especialidad = "Dermatología";
-      else if (texto.includes('odonto') || texto.includes('diente')) especialidad = "Odontología";
-      else if (texto.includes('ortope') || texto.includes('trauma')) especialidad = "Ortopedia y Traumatología";
+    // CASO F: Agente - Agendar Cita Médica (Con detección inteligente de cualquier médico o especialidad)
+    if (texto.includes('agendar') || texto.includes('programar') || texto.includes('pedir cita') || texto.includes('solicitar cita') || texto.includes('cita de') || texto.includes('cita para') || texto.includes('cita con') || texto.includes('sacar cita')) {
+      const todosMedicos = medicoRepository.obtenerTodos();
+      let medico = null;
 
-      const medicosDisponibles = medicoRepository.obtenerPorEspecialidad(especialidad);
-      if (medicosDisponibles.length === 0) {
-        return {
-          tipo: 'agente',
-          rol: 'Agente VerdeSalud (Gestor)',
-          mensaje: `No tenemos especialistas registrados para "${especialidad}". Te invito a consultar Medicina General o contactar la central de citas.`,
-          datos: null
-        };
+      // 1. Detección por nombre de médico
+      if (texto.includes('camila') || texto.includes('morales')) {
+        medico = todosMedicos.find(m => m.id === 'med-2');
+      } else if (texto.includes('valentina') || texto.includes('rios') || texto.includes('ríos')) {
+        medico = todosMedicos.find(m => m.id === 'med-3');
+      } else if (texto.includes('juan') || texto.includes('camilo') || texto.includes('ortiz')) {
+        medico = todosMedicos.find(m => m.id === 'med-4');
+      } else if (texto.includes('sofia') || texto.includes('sofía') || texto.includes('mendoza')) {
+        medico = todosMedicos.find(m => m.id === 'med-5');
+      } else if (texto.includes('mateo') || texto.includes('restrepo')) {
+        medico = todosMedicos.find(m => m.id === 'med-6');
+      } else if (texto.includes('roberto') || texto.includes('vega')) {
+        medico = todosMedicos.find(m => m.id === 'med-1');
       }
 
-      const medico = medicosDisponibles[0];
-      
-      // Fecha calculada próxima (3 días a futuro)
+      // 2. Detección por especialidad
+      if (!medico) {
+        if (texto.includes('cardio') || texto.includes('corazon') || texto.includes('corazón')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Cardiología');
+        } else if (texto.includes('pedia') || texto.includes('niño') || texto.includes('niña')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Pediatría');
+        } else if (texto.includes('dermato') || texto.includes('piel')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Dermatología');
+        } else if (texto.includes('odonto') || texto.includes('diente') || texto.includes('boca')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Odontología');
+        } else if (texto.includes('ortope') || texto.includes('trauma') || texto.includes('hueso')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Ortopedia y Traumatología');
+        } else if (texto.includes('general') || texto.includes('medicina')) {
+          medico = todosMedicos.find(m => m.especialidad === 'Medicina General');
+        } else {
+          medico = todosMedicos.find(m => m.especialidad === 'Medicina General') || todosMedicos[0];
+        }
+      }
+
       const fechaFutura = new Date();
       fechaFutura.setDate(fechaFutura.getDate() + 3);
       const fechaStr = fechaFutura.toISOString().split('T')[0];
-      const horaStr = medico.horariosDisponibles[1] || medico.horariosDisponibles[0] || "10:00 AM";
+      const horaStr = medico.horariosDisponibles[0] || "09:00 AM";
 
-      // Ejecutar la herramienta de agendamiento
       const res = await this.executeTool('agendar_cita', {
         pacienteCedula,
         especialidad: medico.especialidad,
         medicoId: medico.id,
         fecha: fechaStr,
         hora: horaStr,
-        motivo: `Consulta de control en ${especialidad}`
+        motivo: `Consulta de control en ${medico.especialidad}`
       });
 
       return {

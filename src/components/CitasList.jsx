@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, CheckCircle2, XCircle, AlertCircle, PlusCircle, Trash2, ShieldAlert } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -9,7 +9,8 @@ export default function CitasList({
   medicos,
   isModalOpen,
   setIsModalOpen,
-  pacienteActual
+  pacienteActual,
+  medicoPreseleccionado
 }) {
   // Formulario manual
   const [formData, setFormData] = useState({
@@ -22,16 +23,38 @@ export default function CitasList({
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+  // Sincronizar médico si viene preseleccionado o cuando se abre el modal
+  useEffect(() => {
+    if (medicoPreseleccionado) {
+      setFormData(prev => ({
+        ...prev,
+        medicoId: medicoPreseleccionado.id,
+        especialidad: medicoPreseleccionado.especialidad,
+        hora: medicoPreseleccionado.horariosDisponibles[0] || '09:00 AM',
+        motivo: `Consulta en ${medicoPreseleccionado.especialidad}`
+      }));
+    } else if (medicos && medicos.length > 0 && !formData.medicoId) {
+      setFormData(prev => ({
+        ...prev,
+        medicoId: medicos[0].id,
+        especialidad: medicos[0].especialidad,
+        hora: medicos[0].horariosDisponibles[0] || '09:00 AM'
+      }));
+    }
+  }, [medicoPreseleccionado, isModalOpen, medicos]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const medicoSeleccionado = medicos.find(m => m.id === formData.medicoId) || medicos[0];
     onCrearCitaManual({
       ...formData,
-      pacienteCedula: pacienteActual.cedula,
-      pacienteNombre: pacienteActual.nombre,
+      medicoId: medicoSeleccionado.id,
       medicoNombre: medicoSeleccionado.nombre,
       especialidad: medicoSeleccionado.especialidad,
-      sede: medicoSeleccionado.sede
+      sede: medicoSeleccionado.sede,
+      pacienteCedula: pacienteActual.cedula,
+      pacienteNombre: pacienteActual.nombre,
+      agendadoPor: 'Portal VerdeSalud'
     });
 
     try {
@@ -192,11 +215,15 @@ export default function CitasList({
                   value={formData.medicoId}
                   onChange={(e) => {
                     const sel = medicos.find(m => m.id === e.target.value);
-                    setFormData({
-                      ...formData,
-                      medicoId: e.target.value,
-                      especialidad: sel ? sel.especialidad : formData.especialidad
-                    });
+                    if (sel) {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicoId: sel.id,
+                        especialidad: sel.especialidad,
+                        hora: sel.horariosDisponibles[0] || prev.hora,
+                        motivo: `Consulta en ${sel.especialidad}`
+                      }));
+                    }
                   }}
                   required
                 >
@@ -221,19 +248,16 @@ export default function CitasList({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Hora</label>
+                  <label className="form-label">Hora Disponible</label>
                   <select
                     className="form-select"
                     value={formData.hora}
                     onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
                     required
                   >
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:30 AM">11:30 AM</option>
-                    <option value="02:30 PM">02:30 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
+                    {((medicos.find(m => m.id === formData.medicoId) || medicos[0])?.horariosDisponibles || ["08:00 AM", "09:00 AM", "10:00 AM", "02:30 PM"]).map((h, i) => (
+                      <option key={i} value={h}>{h}</option>
+                    ))}
                   </select>
                 </div>
               </div>
