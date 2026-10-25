@@ -108,8 +108,15 @@ export default function App() {
     setCitas(prev => [citaMock, ...prev]);
   };
 
+  // Acción para agendar cita manual desde cualquier pestaña
+  const handleOpenAgendarManual = () => {
+    setTabActiva('citas');
+    setIsModalManualOpen(true);
+  };
+
   // Acción desde directorio médico para agendar con especialista
   const handleSelectMedicoParaCita = (medico) => {
+    setTabActiva('citas');
     setIsModalManualOpen(true);
   };
 
@@ -127,7 +134,7 @@ export default function App() {
         <HeroBanner
           totalCitas={citas.length}
           onOpenChat={() => setIsChatOpen(true)}
-          onOpenAgendarManual={() => setIsModalManualOpen(true)}
+          onOpenAgendarManual={handleOpenAgendarManual}
         />
 
         {/* DATOS DEL PACIENTE ACTIVO */}

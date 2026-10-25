@@ -451,9 +451,7 @@ body {
 }
 
 .cita-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-300);
+  border-color: var(--primary-500);
 }
 
 .cita-card-header {
@@ -840,9 +838,7 @@ body {
 }
 
 .medico-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-300);
+  border-color: var(--primary-500);
 }
 
 .medico-avatar-wrap {

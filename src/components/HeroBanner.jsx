@@ -4,11 +4,6 @@ import { Calendar, FileText, Bot, Shield, Sparkles } from 'lucide-react';
 export default function HeroBanner({ totalCitas, onOpenChat, onOpenAgendarManual }) {
   return (
     <div className="hero-banner">
-      <div className="hero-top-tag">
-        <Sparkles size={14} />
-        <span>Arquitectura de Software • Caso de Estudio Clínico</span>
-      </div>
-
       <h1 className="hero-title">
         Bienvenido a <span>VerdeSalud</span> Digital
       </h1>
@@ -36,7 +31,7 @@ export default function HeroBanner({ totalCitas, onOpenChat, onOpenAgendarManual
           onClick={() => onOpenAgendarManual()}
         >
           <Calendar size={18} />
-          <span>Agendar Cita Manualmente (Fallback RNF3)</span>
+          <span>Agendar Cita Manualmente</span>
         </button>
       </div>
 

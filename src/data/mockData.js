@@ -59,7 +59,7 @@ export const MEDICOS = [
     sede: "Sede Principal - Consultorio 104",
     horariosDisponibles: ["07:30 AM", "09:00 AM", "11:00 AM", "03:00 PM", "05:00 PM"],
     diasAtencion: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-    foto: "https://images.unsplash.com/photo-1594824813626-d6682229555c?w=300&auto=format&fit=crop&q=80"
+    foto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80"
   },
   {
     id: "med-3",
@@ -69,7 +69,7 @@ export const MEDICOS = [
     sede: "Sede Norte - Consultorio 201",
     horariosDisponibles: ["08:30 AM", "10:30 AM", "02:00 PM", "03:30 PM"],
     diasAtencion: ["Martes", "Jueves", "Sábado"],
-    foto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80"
+    foto: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&auto=format&fit=crop&q=80"
   },
   {
     id: "med-4",

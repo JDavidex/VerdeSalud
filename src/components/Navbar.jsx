@@ -14,19 +14,11 @@ export default function Navbar({ pacienteActual, setPacienteActual, listaPacient
             <div className="brand-title">
               VerdeSalud <span style={{ color: 'var(--primary-600)', fontSize: '1rem' }}>✦</span>
             </div>
-            <div className="brand-subtitle">Hospital Universitario & IA</div>
           </div>
         </div>
 
         {/* Status y Selector de Usuario para la Demo */}
         <div className="nav-actions">
-          {/* Badge Cloud Serverless */}
-          <div className="badge-cloud" title="Backend Serverless Functions activas en Vercel">
-            <span className="status-dot-pulse"></span>
-            <CloudLightning size={14} color="var(--primary-600)" />
-            <span>Vercel Serverless Ready</span>
-          </div>
-
           {/* Selector de Paciente */}
           <div className="user-selector-card">
             <div className="user-avatar">

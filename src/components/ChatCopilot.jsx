@@ -2,6 +2,80 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, Sparkles, MessageSquare, Wrench, Shield, CheckCircle, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+// Helper para parsear Markdown básico (**negrilla**, *cursiva*, `código`) y saltos de línea
+function renderFormattedMessage(text) {
+  if (!text) return null;
+  const lines = text.split('\n');
+
+  return lines.map((line, lineIdx) => {
+    if (!line.trim()) {
+      return <div key={lineIdx} style={{ height: '0.45rem' }} />;
+    }
+
+    const regex = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
+    const matches = [...line.matchAll(regex)];
+
+    if (matches.length === 0) {
+      return (
+        <div key={lineIdx} style={{ minHeight: '1.25em' }}>
+          {line}
+        </div>
+      );
+    }
+
+    let currentIndex = 0;
+    const elements = [];
+
+    matches.forEach((m, mIdx) => {
+      const matchText = m[0];
+      const matchIndex = m.index;
+
+      if (matchIndex > currentIndex) {
+        elements.push(line.substring(currentIndex, matchIndex));
+      }
+
+      if (matchText.startsWith('**') && matchText.endsWith('**')) {
+        elements.push(
+          <strong key={`${lineIdx}-${mIdx}`} style={{ fontWeight: 700, color: 'var(--neutral-900)' }}>
+            {matchText.slice(2, -2)}
+          </strong>
+        );
+      } else if (matchText.startsWith('*') && matchText.endsWith('*')) {
+        elements.push(
+          <em key={`${lineIdx}-${mIdx}`} style={{ fontStyle: 'italic', color: 'var(--neutral-600)' }}>
+            {matchText.slice(1, -1)}
+          </em>
+        );
+      } else if (matchText.startsWith('`') && matchText.endsWith('`')) {
+        elements.push(
+          <code key={`${lineIdx}-${mIdx}`} style={{
+            background: 'var(--primary-50)',
+            color: 'var(--primary-800)',
+            padding: '0.1rem 0.35rem',
+            borderRadius: '4px',
+            fontSize: '0.85em',
+            fontFamily: 'var(--font-mono)'
+          }}>
+            {matchText.slice(1, -1)}
+          </code>
+        );
+      }
+
+      currentIndex = matchIndex + matchText.length;
+    });
+
+    if (currentIndex < line.length) {
+      elements.push(line.substring(currentIndex));
+    }
+
+    return (
+      <div key={lineIdx} style={{ minHeight: '1.25em' }}>
+        {elements}
+      </div>
+    );
+  });
+}
+
 export default function ChatCopilot({
   isOpen,
   onClose,
@@ -239,8 +313,8 @@ export default function ChatCopilot({
               </div>
             )}
 
-            <div style={{ whiteSpace: 'pre-line' }}>
-              {msg.texto}
+            <div style={{ wordBreak: 'break-word' }}>
+              {renderFormattedMessage(msg.texto)}
             </div>
           </div>
         ))}
